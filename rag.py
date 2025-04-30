@@ -25,9 +25,15 @@ chunks = text_splitter.split_documents(documents)
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vectorstore = FAISS.from_documents(documents=chunks, embedding=embedding_model)
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+api_key = os.getenv("GEMINI_API_KEY")
+
 # Initialize the retriever and language model
 retriever = vectorstore.as_retriever()
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", api_key="AIzaSyAfc8Jspw-jSEDHF67EJcGms2IAiLOiw0A")
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", api_key=api_key)
 
 # Create a RetrievalQA chain using the new method
 rag_pipeline = RetrievalQA.from_chain_type(
