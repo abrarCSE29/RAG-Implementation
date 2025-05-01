@@ -31,5 +31,22 @@ This project implements a **Retrieval-Augmented Generation (RAG)** system using 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/abrarCSE29/simple-rag-system.git
-   cd simple-rag-system
+   git clone https://github.com/abrarCSE29/RAG-Implementation.git
+   cd RAG-Implementation
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
+3. Run server :
+   ```bash
+   python3 run.py
+   ```
+
+4. Run streamlit app:
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+  
