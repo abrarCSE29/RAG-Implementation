@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import os
 from pathlib import Path
 
 def show_document_embedding():

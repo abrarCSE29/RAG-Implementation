@@ -30,6 +30,17 @@ class RAGService:
             retriever=retriever,
             chain_type="stuff"
         )
+
+    def embed_documents(self, file_paths):
+        # Load and process documents
+        documents = self.document_manager.load_documents(file_paths)
+        chunks = self.document_manager.split_documents(documents)
+        
+        # Create vector store
+        self.vectorstore = FAISS.from_documents(
+            documents=chunks,
+            embedding=self.embedding_manager.model
+        )
     
     def query(self, question):
         if not self.rag_pipeline:
