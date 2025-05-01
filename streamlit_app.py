@@ -3,6 +3,9 @@ from app.web.pages.home import show_home
 from app.web.pages.chat import show_chat
 from app.web.components.sidebar import show_sidebar
 from app.web.pages.document_embedding import show_document_embedding
+from app.utils.server_manager import server_manager
+
+server_manager.start_server()
 st.set_page_config(
     page_title="RAG System",
     page_icon="🤖",
