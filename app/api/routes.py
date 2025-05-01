@@ -7,9 +7,9 @@ rag_service = RAGService()
 @api_bp.before_app_request
 def initialize_rag():
     file_paths = [
-        "data/documents/doc1.txt",
-        "data/documents/doc2.txt",
-        "data/documents/doc3.txt",
+        "app/data/documents/doc1.txt",
+        "app/data/documents/doc2.txt",
+        "app/data/documents/doc3.txt",
     ]
     rag_service.initialize(file_paths)
 
