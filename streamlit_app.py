@@ -2,7 +2,7 @@ import streamlit as st
 from app.web.pages.home import show_home
 from app.web.pages.chat import show_chat
 from app.web.components.sidebar import show_sidebar
-
+from app.web.pages.document_embedding import show_document_embedding
 st.set_page_config(
     page_title="RAG System",
     page_icon="🤖",
@@ -23,6 +23,8 @@ def main():
         show_home()
     elif st.session_state.current_page == "Chat":
         show_chat()
+    elif st.session_state.current_page == "Embed":
+        show_document_embedding()
 
 if __name__ == "__main__":
     main()

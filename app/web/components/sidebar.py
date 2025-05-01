@@ -9,6 +9,8 @@ def show_sidebar():
             st.session_state.current_page = "Home"
         if st.button("💬 Chat"):
             st.session_state.current_page = "Chat"
+        if st.button("Upload Documents"):
+            st.session_state.current_page = "Embed"
         
         st.markdown("---")
         st.markdown("""

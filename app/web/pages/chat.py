@@ -1,10 +1,7 @@
 import streamlit as st
 import requests
-import json
-import torch
-# Import required libraries
 
-torch.classes.__path__ = [] # add this line to manually set it to empty.
+
 
 def show_chat():
     st.title("💬 Chat with Your Documents")
