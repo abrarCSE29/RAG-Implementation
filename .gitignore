@@ -2,3 +2,6 @@ rag_env
 .env
 __pycache__/
 data/documents/*
+.venv
+AGENTS.md
+data/*

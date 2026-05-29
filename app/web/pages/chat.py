@@ -1,65 +1,43 @@
+from __future__ import annotations
+
 import streamlit as st
-import requests
+
+from app.web.api_client import APIClient
 
 
+def show_chat() -> None:
+    client = APIClient(st.session_state.api_base_url, st.session_state.get("api_key"))
 
-def show_chat():
-    st.title("💬 Chat with Your Documents")
-    
-    # Initialize message history if not in session state
+    st.markdown("# Chat with your documents")
+    st.caption("Ask questions, inspect retrieved chunks, and show source-backed answers.")
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    
-    # # File uploader
-    # uploaded_files = st.file_uploader(
-    #     "Upload your documents", 
-    #     accept_multiple_files=True,
-    #     type=['txt', 'pdf']
-    # )
-    
-    # if uploaded_files:
-    #     if st.button("Process Documents"):
-    #         with st.spinner("Processing documents..."):
-    #             try:
-    #                 files = [('files', file) for file in uploaded_files]
-    #                 response = requests.post('http://127.0.0.1:5000/api/upload', files=files)
-    #                 if response.status_code == 200:
-    #                     st.success("Documents processed successfully!")
-    #                 else:
-    #                     st.error(f"Error processing documents: {response.json().get('error')}")
-    #             except Exception as e:
-    #                 st.error(f"Error uploading documents: {str(e)}")
-    
-    # Chat interface
-    if "messages" in st.session_state:
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
-    
-    if prompt := st.chat_input("Ask a question about your documents"):
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        
-        # Generate response through API call
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    response = requests.post(
-                        'http://127.0.0.1:5000/api/query',
-                        json={'question': prompt},
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    
-                    if response.status_code == 200:
-                        answer = response.json().get('response', '')
-                        st.write(answer["result"])
-                        st.session_state.messages.append({
-                            "role": "assistant", 
-                            "content": answer["result"]
-                        })
-                    else:
-                        st.error(f"Error: {response.json().get('error')}")
-                except Exception as e:
-                    st.error(f"Error communicating with server: {str(e)}")
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    question = st.chat_input("Ask a question about the indexed documents")
+    if not question:
+        return
+
+    st.session_state.messages.append({"role": "user", "content": question})
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Retrieving and generating an answer..."):
+            try:
+                result = client.query(question)
+                answer = result.get("answer", "")
+                sources = result.get("sources", [])
+                st.markdown(answer)
+                if sources:
+                    with st.expander("Sources"):
+                        for source in sources:
+                            st.markdown(f"**{source['source_name']}**  ")
+                            st.code(source.get("text", ""), language="text")
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+            except Exception as exc:
+                st.error(f"Request failed: {exc}")

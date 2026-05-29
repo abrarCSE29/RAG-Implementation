@@ -1,10 +1,3 @@
-from flask import Flask
-from app.api.routes import api_bp
+from app.main import create_app
 
-def create_app(config_object=None):
-    app = Flask(__name__)
-    
-    # Register blueprints
-    app.register_blueprint(api_bp, url_prefix='/api')
-    
-    return app
+__all__ = ["create_app"]

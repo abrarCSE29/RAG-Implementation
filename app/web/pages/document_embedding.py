@@ -1,82 +1,63 @@
+from __future__ import annotations
+
 import streamlit as st
-import requests
-from pathlib import Path
 
-def show_document_embedding():
-    st.title("📚 Document Embedding")
-    
-    # Document upload section
-    st.header("Upload Documents")
-    st.markdown("""
-    Upload your documents to embed them into the system. 
-    Supported formats: `.txt`, `.pdf`
-    """)
-    
+from app.web.api_client import APIClient
+
+
+def show_document_embedding() -> None:
+    client = APIClient(st.session_state.api_base_url, st.session_state.get("api_key"))
+
+    st.markdown("# Document ingestion")
+    st.caption("Upload mixed-format documents and inspect the indexed corpus.")
+
     uploaded_files = st.file_uploader(
-        "Choose documents to embed",
+        "Choose documents",
         accept_multiple_files=True,
-        type=['txt', 'pdf']
+        type=["txt", "md", "rst", "rtf", "pdf", "docx", "pptx", "html", "htm", "csv", "json", "xml"],
     )
-    
-    if uploaded_files:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.write(f"📁 {len(uploaded_files)} files selected")
-        with col2:
-            if st.button("Embed Documents", type="primary"):
-                with st.spinner("Processing and embedding documents..."):
-                    try:
-                        # Prepare files for upload
-                        files = [('files', file) for file in uploaded_files]
-                        
-                        # Make API request to embed documents
-                        response = requests.post(
-                            'http://127.0.0.1:5000/api/embed',
-                            files=files
-                        )
-                        
-                        if response.status_code == 200:
-                            result = response.json()
-                            st.success(f"✅ Successfully embedded {len(uploaded_files)} documents!")
-                            
-                            # Show embedding details
-                            with st.expander("View Details"):
-                                st.json(result)
-                        else:
-                            st.error(f"❌ Error: {response.json().get('error', 'Unknown error occurred')}")
-                    
-                    except Exception as e:
-                        st.error(f"❌ Error: {str(e)}")
-    
-    # Show existing embedded documents
-    st.header("Embedded Documents")
-    try:
-        response = requests.get('http://127.0.0.1:5000/api/documents')
-        if response.status_code == 200:
-            documents = response.json().get('documents', [])
-            if documents:
-                st.write(f"Found {len(documents)} embedded documents:")
-                for doc in documents:
-                    st.text(f"📄 {doc}")
-            else:
-                st.info("No documents have been embedded yet.")
-        else:
-            st.warning("Unable to fetch embedded documents.")
-    except Exception as e:
-        st.error(f"Error fetching document list: {str(e)}")
 
-    # Add some helpful information
-    st.markdown("""
-    ---
-    ### About Document Embedding
-    
-    Document embedding converts your text documents into vector representations 
-    that can be efficiently searched and queried. The process:
-    
-    1. Uploads documents to the system
-    2. Processes and splits documents into chunks
-    3. Generates embeddings using advanced language models
-    4. Stores vectors for quick retrieval
-    
-    Your embedded documents will be available for querying in the chat interface.
-    """)
+    if uploaded_files:
+        st.write(f"{len(uploaded_files)} file(s) ready for ingestion")
+        if st.button("Upload to API", type="primary"):
+            try:
+                with st.spinner("Uploading and indexing..."):
+                    result = client.upload(uploaded_files)
+                    st.success(f"Indexed {result.get('document_count', 0)} document(s) and {result.get('chunk_count', 0)} chunks.")
+                    st.json(result)
+            except Exception as exc:
+                st.error(f"Upload failed: {exc}")
+
+    st.markdown("---")
+    st.subheader("Indexed documents")
+    try:
+        documents = client.documents().get("documents", [])
+        if documents:
+            document_options = {document["source_name"]: document["document_id"] for document in documents}
+            selected_source = st.selectbox("Filter chunks by document", ["All documents", *document_options.keys()])
+            selected_document_id = document_options.get(selected_source)
+
+            chunks_response = client.chunks(selected_document_id)
+            chunks = chunks_response.get("chunks", [])
+
+            for document in documents:
+                with st.expander(f"{document['source_name']} ({document['chunk_count']} chunks)"):
+                    st.json(document)
+
+            st.subheader("Chunk browser")
+            if chunks:
+                for chunk in chunks:
+                    chunk_label = f"{chunk['source_name']} | Chunk {chunk.get('chunk_index', '?')} | {chunk['chunk_id']}"
+                    with st.expander(chunk_label):
+                        st.write(chunk.get("text", ""))
+                        st.json({k: v for k, v in chunk.items() if k != "text"})
+            else:
+                st.info("No chunks found for the selected document.")
+        else:
+            st.info("No documents are indexed yet.")
+    except Exception as exc:
+        st.error(f"Could not load the document list: {exc}")
+
+    st.markdown("---")
+    st.subheader("Demo corpus")
+    st.write("Use the generated 10-file sample corpus for a reliable showcase dataset of about 11 MB.")
